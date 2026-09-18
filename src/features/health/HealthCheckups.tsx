@@ -8,8 +8,6 @@ import { CheckupOpinionSections } from '../dataConnection/CheckupOpinionSections
 import { findingCards } from '../dataConnection/CheckupFindings';
 import { hs } from './healthStyles';
 import { format } from './healthModel';
-import { heapyApi } from '../../shared/api/heapyApi';
-import { assessCheckup, checkupCode } from './checkupAssessment';
 import {
   CheckupResultCard,
   CheckupStatusBadge,
@@ -50,14 +48,7 @@ export function HealthCheckups({
     enabled: mode === 'compare' && !!previous,
     retry: false,
   });
-  const profile = useQuery({
-    queryKey: ['me'],
-    queryFn: ({ signal }) => heapyApi.getMe(signal),
-    retry: false,
-  });
-  const assessed = assessCheckup(detail.data, profile.data);
-  const assessedBefore = assessCheckup(before.data, profile.data);
-  const all = assessed?.results ?? [];
+  const all = detail.data?.results ?? [];
   const statuses = [...new Set(all.map(r => r.status || '판정 미제공'))];
   function selector(
     label: string,
@@ -124,10 +115,6 @@ export function HealthCheckups({
       {mode === 'compare' &&
         selector('비교할 이전 회차', previous, setPrevious)}
       {analysis}
-      <Text style={hs.muted}>
-        기관 판정이 없는 항목은 성인 참고 기준으로 분류해요. 참고 판정은 진단이
-        아니며 임신·기저질환·복약 등에 따라 달라질 수 있어요.
-      </Text>
       {mode === 'overview' && (
         <View style={hs.card}>
           <View style={hs.between}>
@@ -217,8 +204,7 @@ export function HealthCheckups({
               <View style={{ gap: 12 }}>
                 <Text style={hs.section}>결과 전체 보기 · {all.length}개</Text>
                 <Text style={hs.muted}>
-                  기관 판정과 참고 판정을 구분해 표시해요. 각 항목 아래에서 적용
-                  기준을 확인할 수 있어요.
+                  검사기관에서 제공한 수치와 판정이에요.
                 </Text>
                 {all
                   .filter(
@@ -274,7 +260,7 @@ export function HealthCheckups({
         ) : before.isError ? (
           <Text style={hs.error}>이전 회차를 불러오지 못했어요.</Text>
         ) : (
-          <Compare before={assessedBefore} current={assessed} />
+          <Compare before={before.data} current={detail.data} />
         ))}
     </>
   );
@@ -288,8 +274,8 @@ function Compare({
 }) {
   const codes = [
     ...new Set(
-      [...(before?.results ?? []), ...(current?.results ?? [])].map(r =>
-        checkupCode(r.itemCode),
+      [...(before?.results ?? []), ...(current?.results ?? [])].map(
+        r => r.itemCode,
       ),
     ),
   ];
@@ -311,7 +297,9 @@ function Compare({
             <Text style={cs.countText}>{codes.length}개 항목</Text>
           </View>
         </View>
-        <Text style={cs.description}>두 회차의 수치 변화를 비교해보세요.</Text>
+        <Text style={cs.description}>
+          두 회차의 수치 변화를 비교해보세요.
+        </Text>
       </LinearGradient>
 
       {/* 검진 회차 정보는 수치 카드 위에서 한 번만 표시 */}
@@ -328,7 +316,9 @@ function Compare({
         </View>
 
         <View style={[cs.periodItem, cs.periodCurrent]}>
-          <Text style={[cs.periodLabel, cs.periodCurrentLabel]}>현재 검진</Text>
+          <Text style={[cs.periodLabel, cs.periodCurrentLabel]}>
+            현재 검진
+          </Text>
           <Text style={cs.periodDate}>
             {current?.measuredAt || '날짜 미제공'}
           </Text>
@@ -336,8 +326,8 @@ function Compare({
       </View>
 
       {codes.map((code, index) => {
-        const a = before?.results.find(r => checkupCode(r.itemCode) === code),
-          b = current?.results.find(r => checkupCode(r.itemCode) === code);
+        const a = before?.results.find(r => r.itemCode === code),
+          b = current?.results.find(r => r.itemCode === code);
         const numeric = a?.numericValue != null && b?.numericValue != null;
         const same = a && b && !!a.unit && a.unit === b.unit;
         const change =
@@ -347,12 +337,11 @@ function Compare({
 
         const changeText =
           change !== null
-            ? `${change > 0 ? '+' : ''}${format(change)}${
-                b?.unit ? ` ${b.unit}` : ''
-              }`
+            ? `${change > 0 ? '+' : ''}${format(change)}${b?.unit ? ` ${b.unit}` : ''}`
             : null;
 
         return (
+
           <View key={code} style={cs.card}>
             <View style={cs.heading}>
               <View style={cs.headingMain}>
@@ -361,10 +350,14 @@ function Compare({
                     {String(index + 1).padStart(2, '0')}
                   </Text>
                 </View>
-                <Text style={cs.itemName}>{b?.itemName || a?.itemName}</Text>
+                <Text style={cs.itemName}>
+                  {b?.itemName || a?.itemName}
+                </Text>
               </View>
 
-              {changeText && <Text style={cs.changeValue}>{changeText}</Text>}
+              {changeText && (
+                <Text style={cs.changeValue}>{changeText}</Text>
+              )}
             </View>
 
             <View style={cs.values}>
@@ -382,9 +375,7 @@ function Compare({
                     style={[
                       cs.value,
                       a
-                        ? {
-                            color: checkupTone(a.status || '판정 미제공').color,
-                          }
+                        ? { color: checkupTone(a.status || '판정 미제공').color }
                         : undefined,
                     ]}
                   >
@@ -392,12 +383,6 @@ function Compare({
                   </Text>
                   {!!a?.unit && <Text style={cs.unit}>{a.unit}</Text>}
                 </View>
-                {a && (
-                  <CheckupStatusBadge
-                    status={a.status}
-                    reference={a.assessmentSource === 'reference'}
-                  />
-                )}
               </View>
 
               <View
@@ -414,9 +399,7 @@ function Compare({
                     style={[
                       cs.value,
                       b
-                        ? {
-                            color: checkupTone(b.status || '판정 미제공').color,
-                          }
+                        ? { color: checkupTone(b.status || '판정 미제공').color }
                         : undefined,
                     ]}
                   >
@@ -424,12 +407,6 @@ function Compare({
                   </Text>
                   {!!b?.unit && <Text style={cs.unit}>{b.unit}</Text>}
                 </View>
-                {b && (
-                  <CheckupStatusBadge
-                    status={b.status}
-                    reference={b.assessmentSource === 'reference'}
-                  />
-                )}
               </View>
 
               <View accessible={false} style={cs.arrow}>

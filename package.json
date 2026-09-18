@@ -7,7 +7,7 @@
     "demo:build": "vite build --config web-demo/vite.config.mts",
     "demo:test": "node web-demo/verify.cjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --test web-demo/verify-checkup-assessment.cjs web-demo/verify-demo-login.cjs web-demo/verify-multi-ocr.cjs scripts/verify-session.cjs",
+    "test": "node --test web-demo/verify-demo-login.cjs web-demo/verify-multi-ocr.cjs scripts/verify-session.cjs",
     "lint": "eslint src",
     "build": "npm run demo:build"
   },

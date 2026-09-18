@@ -11,9 +11,6 @@ export type CheckupFile = {
   inputType: InputType;
 };
 export type CheckupItem = {
-  // 작성자: 김진우 — 화면 표시용 참고 판정이며 기관 원문·OCR 저장에는 사용하지 않는다.
-  assessmentSource?: 'institution' | 'reference' | 'unavailable';
-  referenceDescription?: string;
   classification?: string;
   fieldKey: string;
   itemCode: string | null;

@@ -37,13 +37,7 @@ export function checkupTone(status: string | null) {
   };
 }
 
-export function CheckupStatusBadge({
-  status,
-  reference = false,
-}: {
-  status: string | null;
-  reference?: boolean;
-}) {
+export function CheckupStatusBadge({ status }: { status: string | null }) {
   const tone = checkupTone(status);
   return (
     <View
@@ -56,7 +50,6 @@ export function CheckupStatusBadge({
         {tone.symbol}
       </Text>
       <Text style={[s.badgeText, { color: tone.color }]}>
-        {reference ? '참고 · ' : ''}
         {status || '판정 미제공'}
       </Text>
     </View>
@@ -107,9 +100,7 @@ export function CheckupResultCard({
         style={[s.card, s.compact, { backgroundColor: palette.background }]}
       >
         <View style={s.compactHeading}>
-          <View
-            style={[s.icon, s.compactIcon, { backgroundColor: palette.tint }]}
-          >
+          <View style={[s.icon, s.compactIcon, { backgroundColor: palette.tint }]}>
             <Icon color={palette.ink} />
           </View>
           <Text style={[s.compactName, { color: palette.ink }]}>
@@ -120,10 +111,7 @@ export function CheckupResultCard({
           <Text style={s.compactValue}>{result.value}</Text>
           {!!result.unit && <Text style={s.unit}>{result.unit}</Text>}
         </View>
-        <CheckupStatusBadge
-          status={result.status}
-          reference={result.assessmentSource === 'reference'}
-        />
+        <CheckupStatusBadge status={result.status} />
       </View>
     );
   }
@@ -144,17 +132,9 @@ export function CheckupResultCard({
           {!!result.unit && <Text style={s.unit}>{result.unit}</Text>}
         </View>
         <View style={s.badgeCol}>
-          <CheckupStatusBadge
-            status={result.status}
-            reference={result.assessmentSource === 'reference'}
-          />
+          <CheckupStatusBadge status={result.status} />
         </View>
       </View>
-      {!!result.referenceDescription && (
-        <Text style={[s.unit, { marginTop: 10, lineHeight: 17 }]}>
-          {result.referenceDescription}
-        </Text>
-      )}
     </View>
   );
 }
