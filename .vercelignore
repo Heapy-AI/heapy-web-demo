@@ -1,0 +1,19 @@
+# 작성자: 김진우 — 배포에 필요하지 않은 모바일 파일과 로컬 설정은 업로드하지 않는다.
+.git
+node_modules
+android
+ios
+Reference
+artifacts
+preview
+output
+.env
+.env.*
+*.pem
+*.p12
+*.jks
+*.keystore
+*.log
+Gemfile
+Gemfile.lock
+vendor/

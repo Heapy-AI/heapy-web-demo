@@ -1,0 +1,17 @@
+# 작성자: 김진우 — 실행 산출물과 비밀 설정은 공유하지 않는다.
+node_modules/
+dist-web/
+.vercel/
+.env
+.env.*
+!.env.example
+*.log
+*.pem
+*.key
+*.p12
+*.jks
+.DS_Store
+coverage/
+test-results/
+.codex/
+.agents/

@@ -1,0 +1,75 @@
+# HEAPY 웹 체험
+
+작성자: 김진우
+
+[공개 데모](https://heapy-web-demo.vercel.app/) · [팀 저장소](https://github.com/Heapy-AI/heapy-web-demo)
+
+모바일 앱 화면을 React Native Web으로 재사용한다. 삼성헬스 직접 연동·모바일 푸시 등 웹에서 지원하지 않는 기능을 제외하면 기존 HEAPY 서버 API를 호출한다. 가상 인물 계정이라는 점을 화면에 표시한다.
+
+## 시작하기
+
+Node.js 22.12 이상을 권장한다. 최초 한 번 저장소를 복제하고 의존성을 설치한다.
+
+```powershell
+git clone https://github.com/Heapy-AI/heapy-web-demo.git
+cd heapy-web-demo
+npm ci
+npm run demo
+```
+
+`http://127.0.0.1:5195/`에서 체험 로그인을 누른다. 개발 PC에 Android SDK나 모바일 빌드 도구는 필요 없다. 기본 이메일과 비밀번호 마스킹은 체험 계정 선택 표시이며 실제 비밀번호는 포함하지 않는다.
+
+## 수정할 위치
+
+| 경로 | 내용 |
+| --- | --- |
+| `src/features` | 모바일과 같은 화면·업무 흐름 |
+| `src/shared/api` | 실제 서버 호출·인증 갱신 |
+| `src/features/health/checkupAssessment.ts` | 기관 판정이 없는 항목의 참고 판정 |
+| `web-demo` | 웹 진입 화면·파일 선택·네이티브 대체 코드 |
+| `web-demo/vite.config.mts` | 로컬 프록시·웹 빌드 |
+| `api/demo-login.js` | 서버 전용 체험 로그인 |
+| `vercel.json` | 공개 배포 및 기존 API 서버로 전달 |
+
+이 저장소는 웹 전용 작업본이다. 모바일 저장소와 자동 동기화되지 않는다. 공통 화면을 수정했으면 모바일 팀에 변경 파일을 공유한다.
+
+## 가상 데이터 추가
+
+건강 데이터는 코드 안의 모의 JSON이 아니라 실제 서버 DB에 저장된다. 팀원이 화면에서 추가한 기록은 공개 데모의 같은 계정에도 반영된다.
+
+1. 개인정보 없는 **가상 결과지**를 준비한다. 검진일·검사명·수치·단위·기관 판정을 명확히 기입한다. 다른 날짜의 검진은 문서를 분리한다.
+2. 웹의 건강검진 연결에서 사진 또는 PDF를 업로드한다. 사진은 최대 20장·합계 20MB이며 한 PDF로 합쳐 실제 OCR API에 전달한다.
+3. OCR 결과를 검수하고 확정 저장한다. 기관 판정이 없으면 지원 항목에 한해 참고 판정이 표시된다. 수치를 임의로 정상 처리하지 않는다.
+4. 복약은 가상 약봉투 사진·PDF를 업로드해 검수한 뒤 일정으로 저장하거나, 직접 등록 화면을 이용한다. 검증이 끝난 일정은 복용 종료로 정리한다.
+5. 프로필은 마이페이지에서 수정한다. 삼성헬스 수면·활동 기록의 추가는 현재 웹 입력 기능이 없으므로 백엔드 담당자가 승인된 시드 작업으로 처리한다. 브라우저용 코드에 관리자 키나 DB 연결 정보를 넣지 않는다.
+
+검진 참고 기준과 제한은 [판정 기준 문서](web-demo/검진_참고판정_기준.md)를 확인한다. 여러 사람이 같은 계정에서 OCR을 동시에 실행하면 서버의 진행 중 작업 제한에 걸릴 수 있으므로 순서대로 검증한다.
+
+## 검증과 공동 작업
+
+```powershell
+npm run typecheck
+npm test
+npm run demo:build
+git switch -c feature/작업명
+```
+
+작업 브랜치를 올리고 PR로 검토한다. 개인의 실제 검진표·처방전·비밀번호·토큰·`.env`·`.vercel`은 커밋하지 않는다. 코드 수정만으로 서버의 가상 건강 기록이 추가되지는 않는다.
+
+## 배포
+
+현재 Vercel Hobby 환경에서는 조직 Git 저장소 연결을 이용한 자동 배포가 구성돼 있지 않다. Git 푸시 후 배포 담당자가 검증한 코드를 받아 CLI로 배포한다.
+
+```powershell
+npm exec --yes --package=vercel -- vercel login
+npm exec --yes --package=vercel -- vercel link --project heapy-web-demo --scope hp-32d0
+npm exec --yes --package=vercel -- vercel deploy --prod --yes
+```
+
+기존 프로젝트를 연결해야 같은 공개 주소와 서버 비밀 환경변수를 사용한다. 서버 전용 `HEAPY_DEMO_PASSWORD`는 Vercel 설정에서 관리하며 클라이언트용 접두사를 붙이거나 Git에 기록하지 않는다. 로컬 체험 로그인은 기존 공개 로그인 함수로 전달되므로 팀원에게 비밀번호를 배포할 필요가 없다.
+
+웹 정적 화면은 개발 PC를 꺼도 Vercel에서 제공한다. 로그인·챗봇·OCR 등은 기존 EC2/FastAPI와 DB가 가동 중이어야 하며 Vercel·백엔드 사용량 한도와 장애 영향을 받는다.
+
+## 확인 근거
+
+원본 작업 공간의 `Reference/웹_체험_구현_및_검증.md`, `Reference/코인샵_API_명세_확인본.md`, `Reference/코인샵_복원_결과.md` 및 실제 API·백엔드 코드를 대조했다. 별도 아키텍처·요구사항·DB 설계 md와 `Reference/rule`은 발견되지 않았다. 이번 저장소에는 실행에 필요한 코드와 팀 안내만 포함했다.

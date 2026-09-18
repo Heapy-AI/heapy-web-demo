@@ -1,0 +1,186 @@
+/* 작성자: 김진우 — 모바일 앱의 폭과 배경을 유지한다. */
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic',
+    sans-serif;
+  color: #173a31;
+}
+body {
+  background: #e9f3ef;
+}
+#root {
+  display: flex;
+  flex-direction: column;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}
+button:focus-visible {
+  outline: 3px solid #238cff;
+  outline-offset: 3px;
+}
+.demo-banner {
+  flex-shrink: 0;
+  min-height: 48px;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border-bottom: 1px solid #dceae3;
+  font-size: 14px;
+  z-index: 5;
+}
+.demo-banner > span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.simulation {
+  font-size: 12px;
+  border-radius: 20px;
+  padding: 4px 8px;
+  background: #dff7ef;
+  color: #12694e;
+}
+.demo-banner button {
+  border: 0;
+  background: transparent;
+  color: #36675c;
+  padding: 4px;
+}
+.app-shell {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  min-height: 0;
+  flex: 1;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  background: #f6fbf9;
+  box-shadow: 0 12px 60px #173a3114;
+  overflow: hidden;
+}
+.native-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.welcome {
+  flex: 1;
+  overflow: auto;
+  padding: 40px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(150deg, #effcf6, #edf8ff);
+}
+.welcome h1 {
+  font-size: 32px;
+  line-height: 1.4;
+  letter-spacing: -1px;
+  margin: 28px 0 12px;
+}
+.welcome > p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #648178;
+  margin: 0 0 30px;
+}
+.welcome-note {
+  text-align: left;
+  border: 1px solid #d9eae3;
+  background: #ffffffba;
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 22px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.welcome-note p {
+  margin: 8px 0 0;
+  color: #5b756d;
+}
+.primary {
+  width: 100%;
+  border: 0;
+  background: linear-gradient(100deg, #14b995, #25abcf);
+  color: white;
+  font-weight: 700;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 16px;
+}
+.welcome small {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #688078;
+  margin-top: 18px;
+}
+.detail-info {
+  padding: 24px;
+  overflow: auto;
+  line-height: 1.8;
+}
+.detail-info h1 {
+  font-size: 24px;
+}
+.back {
+  border: 0;
+  background: transparent;
+  color: #1f8f6b;
+  padding: 8px 0;
+  font-weight: 600;
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #13392d80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.info-dialog {
+  max-width: 470px;
+  max-height: 90dvh;
+  overflow: auto;
+  border-radius: 24px;
+  background: white;
+  padding: 26px;
+  line-height: 1.7;
+  font-size: 15px;
+}
+.info-dialog h2 {
+  font-size: 22px;
+}
+.info-dialog ul {
+  padding-left: 20px;
+}
+@media (max-width: 480px) {
+  .demo-banner {
+    padding: 8px 12px;
+  }
+  .app-shell {
+    box-shadow: none;
+  }
+  .welcome {
+    padding-top: 28px;
+  }
+  .welcome h1 {
+    font-size: 28px;
+  }
+}
