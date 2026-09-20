@@ -43,17 +43,23 @@ export function checkupTone(status: string | null) {
   };
 }
 
-// 작성자: 김진우 — '고밀도(HDL) 콜레스테롤'처럼 용어를 끊는 괄호를 이름 끝으로 옮긴다.
-// 괄호가 이미 끝에 있거나 없으면 기관이 적어 준 이름을 그대로 둔다.
+// 작성자: 김진우 — '고밀도(HDL) 콜레스테롤'처럼 용어를 끊는 괄호를 이름 끝으로 옮기고,
+// '감마지티피(γ-GTP)'처럼 끝에 붙은 괄호는 줄을 바꿔 이름과 약어를 분리해 보여 준다.
+// 괄호가 없으면 기관이 적어 준 이름을 그대로 둔다.
 export function checkupItemName(name: string): string {
-  const match = name.match(/\s*\(([^()]*)\)\s*(?=\S)/);
-  if (match?.index == null) return name;
-  const rest = (
-    name.slice(0, match.index) + ' ' + name.slice(match.index + match[0].length)
-  )
-    .replace(/\s+/g, ' ')
-    .trim();
-  return rest ? `${rest}(${match[1]})` : name;
+  const inner = name.match(/\s*\(([^()]*)\)\s*(?=\S)/);
+  let text = name;
+  if (inner?.index != null) {
+    const rest = (
+      name.slice(0, inner.index) +
+      ' ' +
+      name.slice(inner.index + inner[0].length)
+    )
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (rest) text = `${rest}(${inner[1]})`;
+  }
+  return text.replace(/^(.+?)\s*\(([^()]*)\)\s*$/, '$1\n($2)');
 }
 
 export function CheckupStatusBadge({ status }: { status: string | null }) {

@@ -441,13 +441,19 @@ function Compare({
   notice?: string;
   noticeTone?: 'error' | 'muted';
 }) {
+  // 작성자: 김진우 — 전체 보기와 같은 검사 종류 순서로 늘어놓는다.
+  // 현재 회차를 앞에 두고 중복을 걷어내면, 같은 분류 안에서는 검진표 순서가 그대로 남는다.
   const codes = [
     ...new Set(
-      [...(before?.results ?? []), ...(current?.results ?? [])].map(
+      [...(current?.results ?? []), ...(before?.results ?? [])].map(
         r => r.itemCode,
       ),
     ),
-  ];
+  ].sort(
+    (a, b) =>
+      checkupCategories.indexOf(checkupCategoryFor(a)) -
+      checkupCategories.indexOf(checkupCategoryFor(b)),
+  );
 
   // 작성자: 김진우 — 회차 목록을 펼치면 비교 영역 전체를 올려 뒤따르는 추천 미션 카드에 가리지 않게 한다.
   return (
