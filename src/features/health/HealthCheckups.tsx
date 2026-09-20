@@ -14,6 +14,7 @@ import {
   CheckupStatusBadge,
   checkupTone,
 } from './CheckupResultCard';
+import { checkupCategories, checkupCategoryOf } from './checkupCategories';
 
 // 작성자: 김진우 — 결과값 증감을 임의의 개선·악화로 판정하지 않고 기관 상태를 보존한다.
 export function HealthCheckups({
@@ -58,6 +59,9 @@ export function HealthCheckups({
   // 작성자: 김진우 — 기관이 적어 준 순서 대신 정상·경계·이상 순으로 보여 준다.
   const statuses = [...new Set(all.map(r => r.status || '판정 미제공'))].sort(
     (a, b) => checkupTone(a).rank - checkupTone(b).rank,
+  );
+  const visible = all.filter(
+    r => filter === '전체' || (r.status || '판정 미제공') === filter,
   );
   function selector(
     label: string,
@@ -202,6 +206,12 @@ export function HealthCheckups({
         <>
           {mode === 'all' && (
             <>
+              <View style={cs.listHeading}>
+                <Text style={hs.section}>결과 전체 보기 · {all.length}개</Text>
+                <Text style={hs.muted}>
+                  검사기관에서 제공한 수치와 판정이에요.
+                </Text>
+              </View>
               <View style={[hs.row, { flexWrap: 'wrap' }]}>
                 {['전체', ...statuses].map(status => (
                   <Pressable
@@ -239,23 +249,30 @@ export function HealthCheckups({
                 ))}
               </View>
               <View style={{ gap: 12 }}>
-                <Text style={hs.section}>결과 전체 보기 · {all.length}개</Text>
-                <Text style={hs.muted}>
-                  검사기관에서 제공한 수치와 판정이에요.
-                </Text>
-                {all
-                  .filter(
-                    r =>
-                      filter === '전체' ||
-                      (r.status || '판정 미제공') === filter,
-                  )
-                  .map(r => (
-                    <CheckupResultCard
-                      key={`${r.itemCode}-${all.indexOf(r)}`}
-                      result={r}
-                      index={all.indexOf(r)}
-                    />
-                  ))}
+                {/* 작성자: 김진우 — 검사 종류로 묶고 그 안의 카드는 한 색으로 통일한다. */}
+                {checkupCategories.map(category => {
+                  const items = visible.filter(
+                    r => checkupCategoryOf(r.itemCode) === category.key,
+                  );
+                  if (!items.length) return null;
+                  return (
+                    <View key={category.key} style={cs.group}>
+                      <View style={hs.between}>
+                        <Text style={cs.groupName}>{category.name}</Text>
+                        <Text style={cs.groupCount}>{items.length}개</Text>
+                      </View>
+                      <Text style={hs.muted}>{category.description}</Text>
+                      {items.map(r => (
+                        <CheckupResultCard
+                          key={`${r.itemCode}-${all.indexOf(r)}`}
+                          result={r}
+                          index={all.indexOf(r)}
+                          palette={category.palette}
+                        />
+                      ))}
+                    </View>
+                  );
+                })}
               </View>
               <CheckupOpinionSections
                 examinations={findingCards(detail.data?.findings ?? []).map(
@@ -578,6 +595,16 @@ function Compare({
 
 const cs = StyleSheet.create({
   section: { gap: 14 },
+  listHeading: { gap: 4 },
+  // 작성자: 김진우 — 검사 종류 묶음. 이름과 한 줄 설명을 얹고 그 아래 카드를 놓는다.
+  group: { gap: 10, marginTop: 6 },
+  groupName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+  },
+  groupCount: { fontSize: 11, fontWeight: '700', color: '#7A8A93' },
   // 작성자: 김진우 — 검진 회차 드롭다운. 닫혀 있으면 고른 회차만 한 줄로 보인다.
   picker: {
     flexDirection: 'row',
@@ -598,7 +625,7 @@ const cs = StyleSheet.create({
     color: colors.primaryDark,
     flexShrink: 1,
   },
-  caret: { fontSize: 10, color: '#6E8F88' },
+  caret: { fontSize: 11, color: '#6E8F88' },
   // 작성자: 김진우 — 펼친 목록이 아래 카드를 밀지 않고 그 위에 겹쳐 뜬다.
   pickerWrap: { position: 'relative', zIndex: 10 },
   raised: { zIndex: 20 },
@@ -665,13 +692,24 @@ const cs = StyleSheet.create({
     minWidth: 0,
     gap: 3,
   },
-  periodButton: { gap: 3 },
+  // 작성자: 김진우 — 전체 보기 드롭다운처럼 테두리를 둘러 누를 수 있는 칸임을 드러낸다.
+  periodButton: {
+    gap: 4,
+    minHeight: 46,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E1EF',
+  },
   periodValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   periodCurrent: {
     alignItems: 'flex-end',
   },
   periodLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: '#83909F',
   },
@@ -679,8 +717,9 @@ const cs = StyleSheet.create({
     color: '#7653A5',
   },
   periodDate: {
-    fontSize: 11,
-    color: '#6F7888',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#514268',
   },
   periodArrow: {
     width: 24,

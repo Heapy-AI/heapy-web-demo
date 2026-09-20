@@ -3,6 +3,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { CheckupDetail } from '../dataConnection/types';
+import { CheckupPalette } from './checkupCategories';
 
 // 작성자: 김진우 — rank 는 판정을 정상·경계·이상·그 밖 순으로 늘어놓을 때 쓴다.
 export function checkupTone(status: string | null) {
@@ -92,12 +93,15 @@ export function CheckupResultCard({
   result,
   index,
   compact = false,
+  palette: fixed,
 }: {
   result: CheckupDetail['results'][number];
   index: number;
   compact?: boolean;
+  // 작성자: 김진우 — 검사 종류별로 색을 통일할 때 그 색을 넘긴다. 없으면 기존처럼 순서대로 돈다.
+  palette?: CheckupPalette;
 }) {
-  const palette = palettes[index % palettes.length]!;
+  const palette = fixed ?? palettes[index % palettes.length]!;
 
   if (compact) {
     return (
