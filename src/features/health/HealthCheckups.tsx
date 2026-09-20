@@ -247,16 +247,16 @@ export function HealthCheckups({
           {mode === 'overview' && (
             <View style={hs.row}>
               <Pressable
-                onPress={() => onMode('compare')}
-                style={[hs.pill, hs.spacer]}
-              >
-                <Text style={hs.pillText}>과거 검진과 비교</Text>
-              </Pressable>
-              <Pressable
                 onPress={() => onMode('all')}
                 style={[hs.pill, hs.active, hs.spacer]}
               >
                 <Text style={[hs.pillText, hs.white]}>결과 전체 보기</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => onMode('compare')}
+                style={[hs.pill, hs.spacer]}
+              >
+                <Text style={hs.pillText}>과거 검진과 비교</Text>
               </Pressable>
             </View>
           )}
