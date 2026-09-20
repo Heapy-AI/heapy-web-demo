@@ -154,6 +154,10 @@ button:focus-visible {
   padding: 20px;
   z-index: 100;
 }
+/* 작성자: 김진우 — 로그인 화면 진입 안내는 확인 전까지 화면을 가린다. */
+.modal-backdrop.blocking {
+  background: linear-gradient(150deg, #effcf6, #edf8ff);
+}
 .info-dialog {
   max-width: 470px;
   max-height: 90dvh;

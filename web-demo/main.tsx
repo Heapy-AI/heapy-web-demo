@@ -1,15 +1,24 @@
 // 작성자: 김진우 — 모바일 내비게이션·화면·인증·API를 그대로 사용한다.
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from '../src/navigation/RootNavigator';
+import { RootRoute } from '../src/navigation/routes';
 import './style.css';
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 function App() {
   const [information, setInformation] = useState(false);
+  const announced = useRef(false);
+  const close = useCallback(() => setInformation(false), []);
+  // 작성자: 김진우 — 로그인 화면이 처음 보일 때 체험 안내를 자동으로 띄운다.
+  const handleRouteChange = useCallback((route: RootRoute) => {
+    if (route !== 'Login' || announced.current) return;
+    announced.current = true;
+    setInformation(true);
+  }, []);
   return (
     <>
       <header className="demo-banner">
@@ -21,11 +30,11 @@ function App() {
       </header>
       <main className="app-shell">
         <SafeAreaProvider>
-          <RootNavigator />
+          <RootNavigator onRouteChange={handleRouteChange} />
         </SafeAreaProvider>
       </main>
       {information && (
-        <div className="modal-backdrop" onClick={() => setInformation(false)}>
+        <div className="modal-backdrop" onClick={close}>
           <section
             role="dialog"
             aria-modal="true"
@@ -61,11 +70,7 @@ function App() {
               개인정보가 없는 예시 문서를 사용해 주세요. 새로고침해도 저장된
               기록은 유지됩니다.
             </p>
-            <button
-              className="primary"
-              autoFocus
-              onClick={() => setInformation(false)}
-            >
+            <button className="primary" autoFocus onClick={close}>
               확인
             </button>
           </section>
