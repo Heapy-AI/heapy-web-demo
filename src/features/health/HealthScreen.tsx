@@ -1,9 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  durationHours,
-  formatDuration,
-  formatHours,
-} from '../../shared/utils/duration';
+import { formatHourMinute } from '../../shared/utils/duration';
 import {
   BackHandler,
   Platform,
@@ -332,10 +328,20 @@ function PeriodPicker({
   );
 }
 
-// 작성자: 김진우 — 팀원 수치 카드 디자인에 시간 소수점 한 자리 표시를 적용한다.
+// 작성자: 김진우 — 팀원 수치 카드 디자인에 시간과 분을 나눠 담는다. 1시간 미만이면 분만 남긴다.
 function hourParts(value: number | null): Array<[string, string]> {
   if (value === null || !Number.isFinite(value)) return [['—', '']];
-  return [[formatHours(durationHours(value)), '시간']];
+  const total = Math.round(value);
+  const sign = total < 0 ? '-' : '';
+  const absolute = Math.abs(total);
+  const hours = Math.floor(absolute / 60);
+  const minutes = absolute % 60;
+  if (!hours) return [[`${sign}${minutes}`, '분']];
+  if (!minutes) return [[`${sign}${hours}`, '시간']];
+  return [
+    [`${sign}${hours}`, '시간'],
+    [`${minutes}`, '분'],
+  ];
 }
 
 function MetricCard({
@@ -416,13 +422,15 @@ function MetricCard({
         }}
       >
         {minutes ? (
-          // 작성자: 김진우 — 다른 수치 카드처럼 과거 기록은 숫자만 괄호로 감싸고 단위는 밖에 둔다.
-          hourParts(value).map(([amount, suffix]) => (
+          // 작성자: 김진우 — 과거 기록은 시간과 분 전체를 한 쌍의 괄호로 감싼다.
+          hourParts(value).map(([amount, suffix], index, parts) => (
             <View key={suffix} style={hs.metricAmount}>
               <Text style={[hs.value, { color }]}>
-                {stale ? '(' + amount + ')' : amount}
+                {stale && index === 0 ? '(' + amount : amount}
               </Text>
-              <Text style={hs.metricUnit}>{suffix}</Text>
+              <Text style={hs.metricUnit}>
+                {stale && index === parts.length - 1 ? suffix + ')' : suffix}
+              </Text>
             </View>
           ))
         ) : (
@@ -983,6 +991,8 @@ function DetailGraphs({
           title="운동시간 및 종류"
           kind="stack"
           series={exerciseKinds(data.exercise)}
+          stepMinutes={30}
+          omitZero
         />
         <View style={hs.card}>
           <Text style={hs.section}>운동 기록</Text>
@@ -1001,7 +1011,7 @@ function DetailGraphs({
                   </Text>
                   <Text style={hs.muted}>
                     {r.date} ·{' '}
-                    {formatDuration(
+                    {formatHourMinute(
                       numeric(r, 'duration_seconds') === null
                         ? null
                         : numeric(r, 'duration_seconds')! / 60,
