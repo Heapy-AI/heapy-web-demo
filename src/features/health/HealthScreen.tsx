@@ -45,7 +45,7 @@ import {
   sumToday,
   sleepStages,
 } from './healthModel';
-import { hs } from './healthStyles';
+import { hs, unitColor } from './healthStyles';
 import { healthIcons } from './healthIcons';
 
 const domains = [
@@ -372,10 +372,11 @@ function MetricCard({
     ? numeric(record, field)
     : null;
   const value = raw === null ? null : raw * factor;
-  // 작성자: 고수연 — 오늘 잰 값이 아니면 괄호를 씌우고 그 아래에 기록일을 밝힌다.
+  // 작성자: 고수연 — 오늘 잰 값이 아니면 수치를 회색으로 낮추고 그 아래에 기록일을 밝힌다.
   // 오늘 값이면 날짜가 군더더기라 줄을 비운다. 대신 자리는 남겨 카드 높이를 고정한다.
   // today 로 오늘치를 합산하는 카드(걸음·물)는 정의상 늘 오늘이라 여기에 걸리지 않는다.
   const stale = !today && value !== null && record?.date !== koreanDay();
+  const valueColor = stale ? unitColor : color;
   const host = useRef<View>(null);
   const motion = useHealthMotion(label + field, host);
   return (
@@ -422,21 +423,16 @@ function MetricCard({
         }}
       >
         {minutes ? (
-          // 작성자: 김진우 — 과거 기록은 시간과 분 전체를 한 쌍의 괄호로 감싼다.
-          hourParts(value).map(([amount, suffix], index, parts) => (
+          hourParts(value).map(([amount, suffix]) => (
             <View key={suffix} style={hs.metricAmount}>
-              <Text style={[hs.value, { color }]}>
-                {stale && index === 0 ? '(' + amount : amount}
-              </Text>
-              <Text style={hs.metricUnit}>
-                {stale && index === parts.length - 1 ? suffix + ')' : suffix}
-              </Text>
+              <Text style={[hs.value, { color: valueColor }]}>{amount}</Text>
+              <Text style={hs.metricUnit}>{suffix}</Text>
             </View>
           ))
         ) : (
           <>
-            <Text style={[hs.value, { color }]}>
-              {stale ? '(' + format(value) + ')' : format(value)}
+            <Text style={[hs.value, { color: valueColor }]}>
+              {format(value)}
             </Text>
             <Text style={hs.metricUnit}>{unit}</Text>
           </>
