@@ -43,6 +43,19 @@ export function checkupTone(status: string | null) {
   };
 }
 
+// 작성자: 김진우 — '고밀도(HDL) 콜레스테롤'처럼 용어를 끊는 괄호를 이름 끝으로 옮긴다.
+// 괄호가 이미 끝에 있거나 없으면 기관이 적어 준 이름을 그대로 둔다.
+export function checkupItemName(name: string): string {
+  const match = name.match(/\s*\(([^()]*)\)\s*(?=\S)/);
+  if (match?.index == null) return name;
+  const rest = (
+    name.slice(0, match.index) + ' ' + name.slice(match.index + match[0].length)
+  )
+    .replace(/\s+/g, ' ')
+    .trim();
+  return rest ? `${rest}(${match[1]})` : name;
+}
+
 export function CheckupStatusBadge({ status }: { status: string | null }) {
   const tone = checkupTone(status);
   return (
@@ -117,7 +130,7 @@ export function CheckupResultCard({
               <Icon color={palette.ink} />
             </View>
             <Text style={[s.compactName, { color: palette.ink }]}>
-              {result.itemName}
+              {checkupItemName(result.itemName)}
             </Text>
           </View>
           <View style={s.compactBadge}>
@@ -140,7 +153,7 @@ export function CheckupResultCard({
             <Icon color={palette.ink} />
           </View>
           <Text style={[s.name, { color: palette.ink }]}>
-            {result.itemName}
+            {checkupItemName(result.itemName)}
           </Text>
         </View>
         <View style={s.valueCol}>

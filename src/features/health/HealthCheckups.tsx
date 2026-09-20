@@ -12,6 +12,7 @@ import { format } from './healthModel';
 import {
   CheckupResultCard,
   CheckupStatusBadge,
+  checkupItemName,
   checkupTone,
 } from './CheckupResultCard';
 import { checkupCategories, checkupCategoryOf } from './checkupCategories';
@@ -523,7 +524,7 @@ function Compare({
                     </Text>
                   </View>
                   <Text style={cs.itemName}>
-                    {b?.itemName || a?.itemName}
+                    {checkupItemName(b?.itemName || a?.itemName || '')}
                   </Text>
                 </View>
 
