@@ -745,15 +745,13 @@ export function HealthScreen({
             }
             onMode={mode => setRoute(mode === 'overview' ? 'home' : mode)}
             onRegister={onRegister}
-            analysis={
-              <>
-                <AnalysisCard category="checkup" active={active} />
-                <MissionRecommendationCard
-                  scope="CHECKUP"
-                  active={active}
-                  onOpen={onMissions}
-                />
-              </>
+            analysis={<AnalysisCard category="checkup" active={active} />}
+            missions={
+              <MissionRecommendationCard
+                scope="CHECKUP"
+                active={active}
+                onOpen={onMissions}
+              />
             }
           />
         ) : (

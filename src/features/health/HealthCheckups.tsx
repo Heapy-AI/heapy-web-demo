@@ -20,11 +20,14 @@ export function HealthCheckups({
   onMode,
   onRegister,
   analysis,
+  missions,
 }: {
   mode: 'overview' | 'compare' | 'all';
   onMode: (mode: 'overview' | 'compare' | 'all') => void;
   onRegister: () => void;
   analysis: React.ReactNode;
+  // 작성자: 김진우 — 추천 미션은 검진 내용을 다 읽은 뒤 보도록 화면 맨 아래에 둔다.
+  missions: React.ReactNode;
 }) {
   const records = useQuery({
     queryKey: ['health', 'checkups'],
@@ -115,6 +118,31 @@ export function HealthCheckups({
       {mode === 'compare' &&
         selector('비교할 이전 회차', previous, setPrevious)}
       {analysis}
+      {/* 작성자: 김진우 — 판정별 개수를 AI 인사이트 바로 다음에 보여 준다. */}
+      {mode !== 'compare' && (
+        <View style={[hs.row, { flexWrap: 'wrap' }]}>
+          {statuses.map(status => (
+            <View
+              key={status}
+              style={[
+                hs.metric,
+                {
+                  minWidth: 76,
+                  padding: 10,
+                  backgroundColor: checkupTone(status).background,
+                  borderColor: checkupTone(status).border,
+                },
+              ]}
+            >
+              <CheckupStatusBadge status={status} />
+              <Text style={[hs.value, { color: checkupTone(status).color }]}>
+                {all.filter(r => (r.status || '판정 미제공') === status).length}
+                개
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
       {mode === 'overview' && (
         <View style={hs.card}>
           <View style={hs.between}>
@@ -138,31 +166,6 @@ export function HealthCheckups({
       )}
       {mode !== 'compare' && (
         <>
-          <View style={[hs.row, { flexWrap: 'wrap' }]}>
-            {statuses.map(status => (
-              <View
-                key={status}
-                style={[
-                  hs.metric,
-                  {
-                    minWidth: 76,
-                    padding: 10,
-                    backgroundColor: checkupTone(status).background,
-                    borderColor: checkupTone(status).border,
-                  },
-                ]}
-              >
-                <CheckupStatusBadge status={status} />
-                <Text style={[hs.value, { color: checkupTone(status).color }]}>
-                  {
-                    all.filter(r => (r.status || '판정 미제공') === status)
-                      .length
-                  }
-                  개
-                </Text>
-              </View>
-            ))}
-          </View>
           {mode === 'all' && (
             <>
               <View style={[hs.row, { flexWrap: 'wrap' }]}>
@@ -262,6 +265,7 @@ export function HealthCheckups({
         ) : (
           <Compare before={before.data} current={detail.data} />
         ))}
+      {missions}
     </>
   );
 }
