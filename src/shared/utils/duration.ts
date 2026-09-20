@@ -26,6 +26,23 @@ export function formatDuration(
   return `${formatHours(hours)}시간`;
 }
 
+// 작성자: 김진우 — 수면처럼 분까지 읽어야 하는 값은 소수 시간 대신 시간과 분으로 보여 준다.
+export function formatHourMinute(
+  value: number | null | undefined,
+  unit = '분',
+): string {
+  const hours = durationHours(value, unit);
+  if (hours === null) return '—';
+  const total = Math.round(hours * 60);
+  const sign = total < 0 ? '-' : '';
+  const absolute = Math.abs(total);
+  const wholeHours = Math.floor(absolute / 60);
+  const minutes = absolute % 60;
+  if (!wholeHours) return `${sign}${minutes}분`;
+  if (!minutes) return `${sign}${wholeHours}시간`;
+  return `${sign}${wholeHours}시간 ${minutes}분`;
+}
+
 // 작성자: 김진우 — 미션 문구의 명시적인 기간을 변환하고 기간 뒤의 표현을 자연스럽게 연결한다.
 export function formatDurationText(text: string): string {
   return text

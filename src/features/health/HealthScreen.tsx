@@ -1,9 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  durationHours,
-  formatDuration,
-  formatHours,
-} from '../../shared/utils/duration';
+import { formatHourMinute } from '../../shared/utils/duration';
 import {
   BackHandler,
   Platform,
@@ -49,10 +45,18 @@ import {
   sumToday,
   sleepStages,
 } from './healthModel';
-import { hs } from './healthStyles';
+import { hs, unitColor } from './healthStyles';
 import { healthIcons } from './healthIcons';
 
+// 작성자: 김진우 — 영역별 변화는 이 순서대로 나온다. 수면을 먼저 본다.
 const domains = [
+  {
+    id: 'sleep',
+    title: '수면 기록',
+    description: '수면시간 · 단계 · 규칙성',
+    icon: 'sleep',
+    color: '#8057E0',
+  },
   {
     id: 'bio',
     title: '생체 기록',
@@ -73,13 +77,6 @@ const domains = [
     description: '식사 · 영양소 · 수분 · 혈당',
     icon: 'nutrition',
     color: '#F17B4E',
-  },
-  {
-    id: 'sleep',
-    title: '수면 기록',
-    description: '수면시간 · 단계 · 규칙성',
-    icon: 'sleep',
-    color: '#8057E0',
   },
 ] as const;
 // 작성자: 고수연 — color 는 healthIcons 의 선 색과 같은 값이다. 아이콘 타일 배경이 이 색을 따른다.
@@ -332,10 +329,20 @@ function PeriodPicker({
   );
 }
 
-// 작성자: 김진우 — 팀원 수치 카드 디자인에 시간 소수점 한 자리 표시를 적용한다.
+// 작성자: 김진우 — 팀원 수치 카드 디자인에 시간과 분을 나눠 담는다. 1시간 미만이면 분만 남긴다.
 function hourParts(value: number | null): Array<[string, string]> {
   if (value === null || !Number.isFinite(value)) return [['—', '']];
-  return [[formatHours(durationHours(value)), '시간']];
+  const total = Math.round(value);
+  const sign = total < 0 ? '-' : '';
+  const absolute = Math.abs(total);
+  const hours = Math.floor(absolute / 60);
+  const minutes = absolute % 60;
+  if (!hours) return [[`${sign}${minutes}`, '분']];
+  if (!minutes) return [[`${sign}${hours}`, '시간']];
+  return [
+    [`${sign}${hours}`, '시간'],
+    [`${minutes}`, '분'],
+  ];
 }
 
 function MetricCard({
@@ -366,10 +373,11 @@ function MetricCard({
     ? numeric(record, field)
     : null;
   const value = raw === null ? null : raw * factor;
-  // 작성자: 고수연 — 오늘 잰 값이 아니면 괄호를 씌우고 그 아래에 기록일을 밝힌다.
+  // 작성자: 고수연 — 오늘 잰 값이 아니면 수치를 회색으로 낮추고 그 아래에 기록일을 밝힌다.
   // 오늘 값이면 날짜가 군더더기라 줄을 비운다. 대신 자리는 남겨 카드 높이를 고정한다.
   // today 로 오늘치를 합산하는 카드(걸음·물)는 정의상 늘 오늘이라 여기에 걸리지 않는다.
   const stale = !today && value !== null && record?.date !== koreanDay();
+  const valueColor = stale ? unitColor : color;
   const host = useRef<View>(null);
   const motion = useHealthMotion(label + field, host);
   return (
@@ -416,19 +424,16 @@ function MetricCard({
         }}
       >
         {minutes ? (
-          // 작성자: 김진우 — 다른 수치 카드처럼 과거 기록은 숫자만 괄호로 감싸고 단위는 밖에 둔다.
           hourParts(value).map(([amount, suffix]) => (
             <View key={suffix} style={hs.metricAmount}>
-              <Text style={[hs.value, { color }]}>
-                {stale ? '(' + amount + ')' : amount}
-              </Text>
+              <Text style={[hs.value, { color: valueColor }]}>{amount}</Text>
               <Text style={hs.metricUnit}>{suffix}</Text>
             </View>
           ))
         ) : (
           <>
-            <Text style={[hs.value, { color }]}>
-              {stale ? '(' + format(value) + ')' : format(value)}
+            <Text style={[hs.value, { color: valueColor }]}>
+              {format(value)}
             </Text>
             <Text style={hs.metricUnit}>{unit}</Text>
           </>
@@ -741,15 +746,13 @@ export function HealthScreen({
             }
             onMode={mode => setRoute(mode === 'overview' ? 'home' : mode)}
             onRegister={onRegister}
-            analysis={
-              <>
-                <AnalysisCard category="checkup" active={active} />
-                <MissionRecommendationCard
-                  scope="CHECKUP"
-                  active={active}
-                  onOpen={onMissions}
-                />
-              </>
+            analysis={<AnalysisCard category="checkup" active={active} />}
+            missions={
+              <MissionRecommendationCard
+                scope="CHECKUP"
+                active={active}
+                onOpen={onMissions}
+              />
             }
           />
         ) : (
@@ -983,6 +986,8 @@ function DetailGraphs({
           title="운동시간 및 종류"
           kind="stack"
           series={exerciseKinds(data.exercise)}
+          stepMinutes={30}
+          omitZero
         />
         <View style={hs.card}>
           <Text style={hs.section}>운동 기록</Text>
@@ -1001,7 +1006,7 @@ function DetailGraphs({
                   </Text>
                   <Text style={hs.muted}>
                     {r.date} ·{' '}
-                    {formatDuration(
+                    {formatHourMinute(
                       numeric(r, 'duration_seconds') === null
                         ? null
                         : numeric(r, 'duration_seconds')! / 60,

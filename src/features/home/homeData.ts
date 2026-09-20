@@ -1,6 +1,6 @@
 // 작성자: 김진우 — 홈 카드 수치는 서버 집계값만 표시하며 결측을 0으로 대체하지 않는다.
 import { MetricId } from './homeModel';
-import { formatDuration } from '../../shared/utils/duration';
+import { formatDuration, formatHourMinute } from '../../shared/utils/duration';
 
 export type HomeValue = {
   date: string;
@@ -39,9 +39,9 @@ export function formatValue(
   secondary?: number | null,
 ): string {
   if (value == null || !Number.isFinite(value)) return '기록 없음';
-  if (id === 'sleep' || id === 'exercise') {
-    return formatDuration(value, id === 'exercise' ? '초' : '분');
-  }
+  // 작성자: 김진우 — 수면은 7.3시간보다 7시간 20분이 읽기 쉬워 분까지 표시한다.
+  if (id === 'sleep') return formatHourMinute(value);
+  if (id === 'exercise') return formatDuration(value, '초');
   if (id === 'pressure')
     return secondary == null
       ? '기록 없음'

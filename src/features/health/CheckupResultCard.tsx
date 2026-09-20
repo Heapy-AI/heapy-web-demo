@@ -3,7 +3,9 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { CheckupDetail } from '../dataConnection/types';
+import { CheckupPalette } from './checkupCategories';
 
+// 작성자: 김진우 — rank 는 판정을 정상·경계·이상·그 밖 순으로 늘어놓을 때 쓴다.
 export function checkupTone(status: string | null) {
   const label = (status ?? '').trim();
   if (['정상', '정상A', '정상(A)', '이상 없음', '이상없음'].includes(label))
@@ -12,6 +14,7 @@ export function checkupTone(status: string | null) {
       background: '#E1F5EC',
       border: '#B5E5D2',
       symbol: '✓',
+      rank: 0,
     };
   if (['경계', '주의', '정상B', '정상(B)', '경계성'].includes(label))
     return {
@@ -19,6 +22,7 @@ export function checkupTone(status: string | null) {
       background: '#FFF1CF',
       border: '#F0D595',
       symbol: '!',
+      rank: 1,
     };
   if (
     ['이상', '비정상', '질환의심', '질환 의심', '높음', '낮음'].includes(label)
@@ -28,13 +32,34 @@ export function checkupTone(status: string | null) {
       background: '#FCE7EC',
       border: '#EFB8C6',
       symbol: '◆',
+      rank: 2,
     };
   return {
     color: '#667383',
     background: '#EEF1F5',
     border: '#D8DFE7',
     symbol: '−',
+    rank: 3,
   };
+}
+
+// 작성자: 김진우 — '고밀도(HDL) 콜레스테롤'처럼 용어를 끊는 괄호를 이름 끝으로 옮기고,
+// '감마지티피(γ-GTP)'처럼 끝에 붙은 괄호는 줄을 바꿔 이름과 약어를 분리해 보여 준다.
+// 괄호가 없으면 기관이 적어 준 이름을 그대로 둔다.
+export function checkupItemName(name: string): string {
+  const inner = name.match(/\s*\(([^()]*)\)\s*(?=\S)/);
+  let text = name;
+  if (inner?.index != null) {
+    const rest = (
+      name.slice(0, inner.index) +
+      ' ' +
+      name.slice(inner.index + inner[0].length)
+    )
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (rest) text = `${rest}(${inner[1]})`;
+  }
+  return text.replace(/^(.+?)\s*\(([^()]*)\)\s*$/, '$1\n($2)');
 }
 
 export function CheckupStatusBadge({ status }: { status: string | null }) {
@@ -87,31 +112,41 @@ export function CheckupResultCard({
   result,
   index,
   compact = false,
+  palette: fixed,
 }: {
   result: CheckupDetail['results'][number];
   index: number;
   compact?: boolean;
+  // 작성자: 김진우 — 검사 종류별로 색을 통일할 때 그 색을 넘긴다. 없으면 기존처럼 순서대로 돈다.
+  palette?: CheckupPalette;
 }) {
-  const palette = palettes[index % palettes.length]!;
+  const palette = fixed ?? palettes[index % palettes.length]!;
 
   if (compact) {
     return (
       <View
         style={[s.card, s.compact, { backgroundColor: palette.background }]}
       >
-        <View style={s.compactHeading}>
-          <View style={[s.icon, s.compactIcon, { backgroundColor: palette.tint }]}>
-            <Icon color={palette.ink} />
+        {/* 작성자: 김진우 — 판정은 카드 오른쪽 위에 두고 이름은 왼쪽에서 줄바꿈한다. */}
+        <View style={s.compactTop}>
+          <View style={s.compactHeading}>
+            <View
+              style={[s.icon, s.compactIcon, { backgroundColor: palette.tint }]}
+            >
+              <Icon color={palette.ink} />
+            </View>
+            <Text style={[s.compactName, { color: palette.ink }]}>
+              {checkupItemName(result.itemName)}
+            </Text>
           </View>
-          <Text style={[s.compactName, { color: palette.ink }]}>
-            {result.itemName}
-          </Text>
+          <View style={s.compactBadge}>
+            <CheckupStatusBadge status={result.status} />
+          </View>
         </View>
         <View style={s.compactValueGroup}>
           <Text style={s.compactValue}>{result.value}</Text>
           {!!result.unit && <Text style={s.unit}>{result.unit}</Text>}
         </View>
-        <CheckupStatusBadge status={result.status} />
       </View>
     );
   }
@@ -124,7 +159,7 @@ export function CheckupResultCard({
             <Icon color={palette.ink} />
           </View>
           <Text style={[s.name, { color: palette.ink }]}>
-            {result.itemName}
+            {checkupItemName(result.itemName)}
           </Text>
         </View>
         <View style={s.valueCol}>
@@ -213,9 +248,22 @@ const s = StyleSheet.create({
 
   // 김진우 수정: compact(2열 그리드) 카드는 원래 디자인대로 세로로 쌓는다.
   compact: { flexGrow: 1, flexBasis: '44%', padding: 13, gap: 14 },
-  compactHeading: { flexDirection: 'column', alignItems: 'flex-start', gap: 8 },
+  compactTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  compactHeading: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 8,
+    flexShrink: 1,
+  },
   compactIcon: { width: 32, height: 32, borderRadius: 11 },
   compactName: { fontSize: 13, lineHeight: 19, fontWeight: '700' },
+  // 작성자: 김진우 — 배지는 카드 폭까지 늘어나지 않고 판정 글자 폭만 차지한다.
+  compactBadge: { alignSelf: 'flex-start', flexShrink: 1, maxWidth: '100%' },
   compactValueGroup: {
     flexDirection: 'row',
     flexWrap: 'wrap',

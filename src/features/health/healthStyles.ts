@@ -1,5 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../shared/theme/tokens';
+// 작성자: 김진우 — 단위 글자 색. 오늘 잰 값이 아닌 수치도 같은 회색으로 낮춘다.
+export const unitColor = '#93A6A3';
 // 작성자: 김진우 — 내 건강의 요약·그래프·입력·검진 화면에 밝은 표면과 일관된 높이감을 적용한다.
 export const hs = StyleSheet.create({
   root: { flex: 1, minHeight: 0 },
@@ -86,7 +88,7 @@ export const hs = StyleSheet.create({
     flexShrink: 1,
     textAlign: 'right',
   },
-  metricUnit: { fontSize: 11, color: '#93A6A3', fontWeight: '500' },
+  metricUnit: { fontSize: 11, color: unitColor, fontWeight: '500' },
   // 작성자: 고수연 — 숫자와 단위를 한 덩어리로 묶는다. '7시간 30분'이 두 쌍으로 붙는다.
   metricAmount: {
     flexDirection: 'row' as const,

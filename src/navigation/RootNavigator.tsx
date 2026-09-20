@@ -40,7 +40,9 @@ import { MedicationRegistrationScreen } from '../features/medication/MedicationR
 import { useMedicationPush } from '../features/medication/useMedicationPush';
 import { NotificationScreen } from '../features/notifications/NotificationScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
-export function RootNavigator() {
+// 작성자: 김진우 — 화면 밖 껍데기(웹 체험 안내 등)가 현재 표시 중인 화면을 알 수 있게 한다.
+type Props = { onRouteChange?: (route: RootRoute) => void };
+export function RootNavigator({ onRouteChange }: Props = {}) {
   const [welcomeDone, setWelcomeDone] = React.useState(false);
   const finishWelcome = React.useCallback(() => setWelcomeDone(true), []);
   const reducedMotion = useReducedMotion();
@@ -90,6 +92,12 @@ export function RootNavigator() {
       active = false;
     };
   }, [attempt, navigation, queryClient]);
+  // 작성자: 김진우 — 시작 화면·오류 화면이 아니라 실제로 화면에 올라온 경로만 알린다.
+  const visibleRoute =
+    welcomeDone && !loadError ? activeRoute ?? route : undefined;
+  React.useEffect(() => {
+    if (visibleRoute) onRouteChange?.(visibleRoute);
+  }, [visibleRoute, onRouteChange]);
   if (!welcomeDone) return <WelcomeScreen onComplete={finishWelcome} />;
   if (loadError)
     return (

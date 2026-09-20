@@ -135,10 +135,12 @@ export function MetricCards({
               end={{ x: 1, y: 1 }}
               style={h.metricSurface}
             />
-            <View style={h.metricIcon}>
-              <HomeIcon name={id} color={design.color} size={25} />
+            <View style={h.metricTop}>
+              <View style={h.metricIcon}>
+                <HomeIcon name={id} color={design.color} size={25} />
+              </View>
+              <Text style={[h.metricLabel, h.flex]}>{metrics[id][0]}</Text>
             </View>
-            <Text style={h.metricLabel}>{metrics[id][0]}</Text>
             <Text style={[h.value, { color: design.color }]}>
               {formatValue(id, value?.value, value?.secondary)}
             </Text>
@@ -283,6 +285,8 @@ export const h = StyleSheet.create({
     left: 0,
     borderRadius: 20,
   },
+  // 작성자: 김진우 — 지표 이름을 아이콘 아래가 아니라 오른쪽 같은 높이에 둔다.
+  metricTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   metricIcon: {
     width: 44,
     height: 44,
@@ -301,16 +305,33 @@ export const h = StyleSheet.create({
     letterSpacing: -0.6,
     lineHeight: 30,
     fontVariant: ['tabular-nums'],
+    textAlign: 'center',
   },
+  // 작성자: 김진우 — 기록일과 집계 기간을 한 줄에 오른쪽으로 모은다.
   metricFoot: {
-    gap: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
     borderTopWidth: 1,
     borderTopColor: '#FFFFFFB3',
     paddingTop: 10,
     marginTop: 2,
   },
-  metricDate: { fontSize: 10, color: '#627B8B', lineHeight: 16 },
-  metricPeriod: { fontSize: 10, color: '#627B8B', lineHeight: 16 },
+  metricDate: {
+    fontSize: 10,
+    color: '#627B8B',
+    lineHeight: 16,
+    textAlign: 'right',
+    flexShrink: 1,
+  },
+  metricPeriod: {
+    fontSize: 10,
+    color: '#627B8B',
+    lineHeight: 16,
+    textAlign: 'right',
+    flexShrink: 1,
+  },
   choice: {
     flexGrow: 1,
     flexBasis: '45%',

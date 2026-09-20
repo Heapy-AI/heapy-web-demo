@@ -15,7 +15,11 @@ import { chartDates, format } from './healthModel';
 import { axisMaximum, lineSegments } from './chartGeometry';
 import { useHealthMotion } from './useHealthMotion';
 import { hs } from './healthStyles';
-import { durationHours, formatHours } from '../../shared/utils/duration';
+import {
+  durationHours,
+  formatHourMinute,
+  formatHours,
+} from '../../shared/utils/duration';
 
 // 작성자: 김진우 — 그래프·말풍선·수치표는 동일한 시간 단위를 사용하고 원본 계열은 변경하지 않는다.
 const hourlySeries = (items: Series[]) =>
@@ -31,6 +35,9 @@ const hourlySeries = (items: Series[]) =>
         }
       : item,
   );
+// 작성자: 김진우 — SVG 축 라벨은 줄바꿈이 없어 한글 폭을 셈해 왼쪽 여백을 정한다.
+const labelWidth = (text: string) =>
+  [...text].reduce((sum, ch) => sum + (/[가-힣]/.test(ch) ? 9 : 5), 0);
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 const AnimatedGroup = Animated.createAnimatedComponent(G);
 const palette = [
@@ -52,6 +59,8 @@ export function HealthChart({
   tableSeries: sourceTableSeries,
   period,
   maximum: sourceMaximum,
+  stepMinutes,
+  omitZero = false,
 }: {
   title: string;
   series: Series[];
@@ -60,6 +69,10 @@ export function HealthChart({
   tableSeries?: Series[];
   period?: HealthPage['period'];
   maximum?: number;
+  // 작성자: 김진우 — 시간 계열의 축 간격을 분으로 지정하고 수치를 시간 분으로 읽는다.
+  stepMinutes?: number;
+  // 작성자: 김진우 — 구성 비율 그래프에서 그날 기록이 0인 항목을 말풍선에서 뺀다.
+  omitZero?: boolean;
 }) {
   const series = useMemo(() => hourlySeries(sourceSeries), [sourceSeries]);
   const tableSeries = useMemo(
@@ -121,7 +134,6 @@ export function HealthChart({
   );
   const dates = chartDates(series, period),
     chartWidth = width * zoom,
-    left = 34,
     right = 12,
     top = 30,
     bottom = 192;
@@ -141,14 +153,31 @@ export function HealthChart({
           ),
     ),
   );
+  // 작성자: 김진우 — stepMinutes 를 받은 계열은 그 간격으로 눈금을 놓고 최댓값 바로 위에서 축을 끊는다.
+  const step = hourAxis && stepMinutes ? stepMinutes / 60 : 0;
+  const minuteAxis = step > 0 && maximum == null;
   // 작성자: 김진우 — 최댓값까지 축을 올려 수면 막대의 실제 높이가 잘리지 않게 한다.
-  const max =
-    maximum ??
-    (hourAxis ? Math.max(3, Math.ceil(peak / 3) * 3) : axisMaximum(peak));
-  const ticks =
-    hourAxis && maximum == null
-      ? Array.from({ length: max / 3 + 1 }, (_, i) => (i * 3) / max)
-      : [0, 0.25, 0.5, 0.75, 1];
+  const max = minuteAxis
+    ? Math.max(step, Math.ceil(peak / step) * step)
+    : maximum ??
+      (hourAxis ? Math.max(3, Math.ceil(peak / 3) * 3) : axisMaximum(peak));
+  const ticks = minuteAxis
+    ? Array.from(
+        { length: Math.round(max / step) + 1 },
+        (_, i) => (i * step) / max,
+      )
+    : hourAxis && maximum == null
+    ? Array.from({ length: max / 3 + 1 }, (_, i) => (i * 3) / max)
+    : [0, 0.25, 0.5, 0.75, 1];
+  // 작성자: 김진우 — 축·말풍선·수치표가 같은 시간 표기를 쓴다.
+  const hourText = (value?: number | null) =>
+    minuteAxis ? formatHourMinute(value, '시간') : `${formatHours(value)}시간`;
+  const axisLabel = (ratio: number) =>
+    hourAxis ? hourText(max * ratio) : format(max * ratio, max < 10 ? 1 : 0);
+  // 작성자: 김진우 — '1시간 30분'처럼 긴 라벨은 기본 여백에서 잘리므로 실제 폭만큼 넓힌다.
+  const left = minuteAxis
+    ? Math.max(34, Math.max(...ticks.map(r => labelWidth(axisLabel(r)))) + 12)
+    : 34;
   const slot = (chartWidth - left - right) / Math.max(1, dates.length);
   const x = (i: number) => left + (i + 0.5) * slot,
     y = (value: number) =>
@@ -159,7 +188,7 @@ export function HealthChart({
       point: s.points.find(p => p.date === selected),
       color: colorOf(s, i),
     }))
-    .filter(v => v.point);
+    .filter(v => v.point && (!omitZero || v.point.value !== 0));
   const choose = (date: string) =>
     setSelected(prior => (prior === date ? '' : date));
   const barWidth = Math.min(28, slot * 0.56);
@@ -232,9 +261,7 @@ export function HealthChart({
                       fontSize={9}
                       fill="#9AA9B1"
                     >
-                      {hourAxis
-                        ? `${formatHours(max * r)}시간`
-                        : format(max * r, max < 10 ? 1 : 0)}
+                      {axisLabel(r)}
                     </SvgText>
                   </G>
                 ))}
@@ -415,10 +442,16 @@ export function HealthChart({
                       <View style={[s.dot, { backgroundColor: v.color }]} />
                       <Text style={s.tooltipLabel}>{v.series.label}</Text>
                       <Text style={s.tooltipValue}>
-                        {v.series.unit === '시간'
-                          ? formatHours(v.point?.value)
-                          : format(v.point?.value)}{' '}
-                        <Text style={s.tooltipUnit}>{v.series.unit}</Text>
+                        {v.series.unit === '시간' && minuteAxis ? (
+                          formatHourMinute(v.point?.value, '시간')
+                        ) : (
+                          <>
+                            {v.series.unit === '시간'
+                              ? formatHours(v.point?.value)
+                              : format(v.point?.value)}{' '}
+                            <Text style={s.tooltipUnit}>{v.series.unit}</Text>
+                          </>
+                        )}
                       </Text>
                     </View>
                   ))}
@@ -463,26 +496,39 @@ export function HealthChart({
       {table && (
         <View style={s.table}>
           {!!note && <Text style={hs.muted}>{note}</Text>}
-          {dates.map(d => (
-            <View key={d} style={s.tableRow}>
-              <Text style={s.tableDate}>{d}</Text>
-              {(tableSeries ?? series).map(a => {
-                const p = a.points.find(v => v.date === d);
-                return (
-                  <Text key={a.key} style={hs.muted}>
-                    {a.label}:{' '}
-                    {a.unit === '시간'
-                      ? formatHours(p?.value)
-                      : format(p?.value)}{' '}
-                    {a.unit}
-                    {p
-                      ? ` · 기록 ${p.recordedDays}일 / 구간 ${p.spanDays}일`
-                      : ''}
-                  </Text>
-                );
-              })}
-            </View>
-          ))}
+          {/* 작성자: 김진우 — omitZero 면 기록이 없는 날은 줄째로 뺀다. */}
+          {dates
+            .filter(
+              d =>
+                !omitZero ||
+                (tableSeries ?? series).some(
+                  a => a.points.find(v => v.date === d)?.value,
+                ),
+            )
+            .map(d => (
+              <View key={d} style={s.tableRow}>
+                <Text style={s.tableDate}>{d}</Text>
+                {(tableSeries ?? series).map(a => {
+                  const p = a.points.find(v => v.date === d);
+                  if (omitZero && !p?.value) return null;
+                  return (
+                    <Text key={a.key} style={hs.muted}>
+                      {a.label}:{' '}
+                      {a.unit === '시간' && minuteAxis
+                        ? formatHourMinute(p?.value, '시간')
+                        : `${
+                            a.unit === '시간'
+                              ? formatHours(p?.value)
+                              : format(p?.value)
+                          } ${a.unit}`}
+                      {p
+                        ? ` · 기록 ${p.recordedDays}일 / 구간 ${p.spanDays}일`
+                        : ''}
+                    </Text>
+                  );
+                })}
+              </View>
+            ))}
         </View>
       )}
     </Animated.View>
