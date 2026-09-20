@@ -48,7 +48,15 @@ import {
 import { hs, unitColor } from './healthStyles';
 import { healthIcons } from './healthIcons';
 
+// 작성자: 김진우 — 영역별 변화는 이 순서대로 나온다. 수면을 먼저 본다.
 const domains = [
+  {
+    id: 'sleep',
+    title: '수면 기록',
+    description: '수면시간 · 단계 · 규칙성',
+    icon: 'sleep',
+    color: '#8057E0',
+  },
   {
     id: 'bio',
     title: '생체 기록',
@@ -69,13 +77,6 @@ const domains = [
     description: '식사 · 영양소 · 수분 · 혈당',
     icon: 'nutrition',
     color: '#F17B4E',
-  },
-  {
-    id: 'sleep',
-    title: '수면 기록',
-    description: '수면시간 · 단계 · 규칙성',
-    icon: 'sleep',
-    color: '#8057E0',
   },
 ] as const;
 // 작성자: 고수연 — color 는 healthIcons 의 선 색과 같은 값이다. 아이콘 타일 배경이 이 색을 따른다.
