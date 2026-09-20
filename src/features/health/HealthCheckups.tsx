@@ -68,6 +68,15 @@ export function HealthCheckups({
   const visible = all.filter(
     r => filter === '전체' || (r.status || '판정 미제공') === filter,
   );
+  // 작성자: 김진우 — 핵심 수치는 이상 → 경계 → 정상 순으로 고른다. 판정이 없는 항목은 맨 뒤다.
+  const severity = (status: string | null) => {
+    const { rank } = checkupTone(status);
+    return rank === 3 ? 3 : 2 - rank;
+  };
+  // 정렬은 안정적이라 같은 판정끼리는 검진표에 적힌 순서가 그대로 남는다.
+  const highlights = [...all]
+    .sort((a, b) => severity(a.status) - severity(b.status))
+    .slice(0, 4);
   function selector(
     label: string,
     value: string | undefined,
@@ -197,7 +206,7 @@ export function HealthCheckups({
           </Text>
           <View style={[hs.row, { flexWrap: 'wrap' }]}>
             {/* 작성자: 김진우 — 전체 보기와 같은 검사 종류 색을 쓴다. */}
-            {all.slice(0, 4).map((r, i) => (
+            {highlights.map((r, i) => (
               <CheckupResultCard
                 key={`${r.itemCode}-${i}`}
                 result={r}
