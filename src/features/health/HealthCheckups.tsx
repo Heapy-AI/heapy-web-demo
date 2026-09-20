@@ -52,7 +52,10 @@ export function HealthCheckups({
     retry: false,
   });
   const all = detail.data?.results ?? [];
-  const statuses = [...new Set(all.map(r => r.status || '판정 미제공'))];
+  // 작성자: 김진우 — 기관이 적어 준 순서 대신 정상·경계·이상 순으로 보여 준다.
+  const statuses = [...new Set(all.map(r => r.status || '판정 미제공'))].sort(
+    (a, b) => checkupTone(a).rank - checkupTone(b).rank,
+  );
   function selector(
     label: string,
     value: string | undefined,
@@ -134,8 +137,16 @@ export function HealthCheckups({
                 },
               ]}
             >
-              <CheckupStatusBadge status={status} />
-              <Text style={[hs.value, { color: checkupTone(status).color }]}>
+              {/* 작성자: 김진우 — 판정 배지가 카드 폭까지 늘어나지 않고 글자 폭만 차지한다. */}
+              <View style={{ alignSelf: 'flex-start', maxWidth: '100%' }}>
+                <CheckupStatusBadge status={status} />
+              </View>
+              <Text
+                style={[
+                  hs.value,
+                  { color: checkupTone(status).color, textAlign: 'center' },
+                ]}
+              >
                 {all.filter(r => (r.status || '판정 미제공') === status).length}
                 개
               </Text>

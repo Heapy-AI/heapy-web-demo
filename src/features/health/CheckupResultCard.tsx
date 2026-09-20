@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { CheckupDetail } from '../dataConnection/types';
 
+// 작성자: 김진우 — rank 는 판정을 정상·경계·이상·그 밖 순으로 늘어놓을 때 쓴다.
 export function checkupTone(status: string | null) {
   const label = (status ?? '').trim();
   if (['정상', '정상A', '정상(A)', '이상 없음', '이상없음'].includes(label))
@@ -12,6 +13,7 @@ export function checkupTone(status: string | null) {
       background: '#E1F5EC',
       border: '#B5E5D2',
       symbol: '✓',
+      rank: 0,
     };
   if (['경계', '주의', '정상B', '정상(B)', '경계성'].includes(label))
     return {
@@ -19,6 +21,7 @@ export function checkupTone(status: string | null) {
       background: '#FFF1CF',
       border: '#F0D595',
       symbol: '!',
+      rank: 1,
     };
   if (
     ['이상', '비정상', '질환의심', '질환 의심', '높음', '낮음'].includes(label)
@@ -28,12 +31,14 @@ export function checkupTone(status: string | null) {
       background: '#FCE7EC',
       border: '#EFB8C6',
       symbol: '◆',
+      rank: 2,
     };
   return {
     color: '#667383',
     background: '#EEF1F5',
     border: '#D8DFE7',
     symbol: '−',
+    rank: 3,
   };
 }
 
@@ -99,19 +104,26 @@ export function CheckupResultCard({
       <View
         style={[s.card, s.compact, { backgroundColor: palette.background }]}
       >
-        <View style={s.compactHeading}>
-          <View style={[s.icon, s.compactIcon, { backgroundColor: palette.tint }]}>
-            <Icon color={palette.ink} />
+        {/* 작성자: 김진우 — 판정은 카드 오른쪽 위에 두고 이름은 왼쪽에서 줄바꿈한다. */}
+        <View style={s.compactTop}>
+          <View style={s.compactHeading}>
+            <View
+              style={[s.icon, s.compactIcon, { backgroundColor: palette.tint }]}
+            >
+              <Icon color={palette.ink} />
+            </View>
+            <Text style={[s.compactName, { color: palette.ink }]}>
+              {result.itemName}
+            </Text>
           </View>
-          <Text style={[s.compactName, { color: palette.ink }]}>
-            {result.itemName}
-          </Text>
+          <View style={s.compactBadge}>
+            <CheckupStatusBadge status={result.status} />
+          </View>
         </View>
         <View style={s.compactValueGroup}>
           <Text style={s.compactValue}>{result.value}</Text>
           {!!result.unit && <Text style={s.unit}>{result.unit}</Text>}
         </View>
-        <CheckupStatusBadge status={result.status} />
       </View>
     );
   }
@@ -213,9 +225,22 @@ const s = StyleSheet.create({
 
   // 김진우 수정: compact(2열 그리드) 카드는 원래 디자인대로 세로로 쌓는다.
   compact: { flexGrow: 1, flexBasis: '44%', padding: 13, gap: 14 },
-  compactHeading: { flexDirection: 'column', alignItems: 'flex-start', gap: 8 },
+  compactTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  compactHeading: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 8,
+    flexShrink: 1,
+  },
   compactIcon: { width: 32, height: 32, borderRadius: 11 },
   compactName: { fontSize: 13, lineHeight: 19, fontWeight: '700' },
+  // 작성자: 김진우 — 배지는 카드 폭까지 늘어나지 않고 판정 글자 폭만 차지한다.
+  compactBadge: { alignSelf: 'flex-start', flexShrink: 1, maxWidth: '100%' },
   compactValueGroup: {
     flexDirection: 'row',
     flexWrap: 'wrap',
