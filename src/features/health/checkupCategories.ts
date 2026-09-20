@@ -151,6 +151,15 @@ const blood = new Set([
   'CBC_PANEL',
 ]);
 
+// 작성자: 김진우 — 항목 하나의 분류가 필요할 때(핵심 수치 카드 등) 쓴다.
+export function checkupCategoryFor(itemCode: string | null): CheckupCategory {
+  const key = checkupCategoryOf(itemCode);
+  return (
+    checkupCategories.find(category => category.key === key) ??
+    checkupCategories[checkupCategories.length - 1]!
+  );
+}
+
 export function checkupCategoryOf(itemCode: string | null): CheckupCategoryKey {
   const code = (itemCode ?? '').trim().toUpperCase();
   if (!code) return 'etc';

@@ -15,7 +15,11 @@ import {
   checkupItemName,
   checkupTone,
 } from './CheckupResultCard';
-import { checkupCategories, checkupCategoryOf } from './checkupCategories';
+import {
+  checkupCategories,
+  checkupCategoryFor,
+  checkupCategoryOf,
+} from './checkupCategories';
 
 // 작성자: 김진우 — 결과값 증감을 임의의 개선·악화로 판정하지 않고 기관 상태를 보존한다.
 export function HealthCheckups({
@@ -192,12 +196,14 @@ export function HealthCheckups({
             {detail.data?.providerName || '기관 미제공'}
           </Text>
           <View style={[hs.row, { flexWrap: 'wrap' }]}>
+            {/* 작성자: 김진우 — 전체 보기와 같은 검사 종류 색을 쓴다. */}
             {all.slice(0, 4).map((r, i) => (
               <CheckupResultCard
                 key={`${r.itemCode}-${i}`}
                 result={r}
                 index={i}
                 compact
+                palette={checkupCategoryFor(r.itemCode).palette}
               />
             ))}
           </View>
