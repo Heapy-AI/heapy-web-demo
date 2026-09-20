@@ -434,8 +434,9 @@ function Compare({
     ),
   ];
 
+  // 작성자: 김진우 — 회차 목록을 펼치면 비교 영역 전체를 올려 뒤따르는 추천 미션 카드에 가리지 않게 한다.
   return (
-    <View style={cs.section}>
+    <View style={[cs.section, !!openPicker && cs.raised]}>
       <LinearGradient
         colors={['#F0EAFF', '#EAF4FB']}
         start={{ x: 0, y: 0 }}
